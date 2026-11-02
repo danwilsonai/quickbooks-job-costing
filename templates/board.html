@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Jobs</h1>
+<div class="card">
+  <h2>New job</h2>
+  <form class="inline" method="post" action="{{ url_for('new_job') }}">
+    <input type="hidden" name="csrf" value="{{ session.csrf }}">
+    <label>Customer<br><select name="customer_id" required>
+      {% for c in customers %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+    </select></label>
+    <label>What's the job<br><input name="title" required size="32"></label>
+    <label>Quoted ($)<br><input name="quoted" size="8" inputmode="decimal"></label>
+    <label>Address<br><input name="address" size="22"></label>
+    <button>Create</button>
+  </form>
+  {% if not customers %}<p class="muted">Add a customer in Settings, or pull them from QuickBooks.</p>{% endif %}
+</div>
+<div class="card wrap">
+  <table>
+    <tr><th>Job</th><th>Customer</th><th>Title</th><th>Status</th><th class="n">Hours</th><th class="n">Revenue</th><th class="n">Profit</th><th class="n">Margin</th></tr>
+    {% for j in jobs %}{% set k = costs[j.id] %}
+    <tr>
+      <td><a href="{{ url_for('job_page', number=j.number) }}">{{ j.number }}</a></td>
+      <td>{{ j.customer }}</td><td>{{ j.title }}</td>
+      <td><span class="pill {{ j.status }}">{{ j.status }}</span></td>
+      <td class="n">{{ k.hours }}</td><td class="n">{{ dollars(k.revenue) }}</td>
+      <td class="n {{ 'bad' if k.profit < 0 }}">{{ dollars(k.profit) }}</td><td class="n">{{ pct(k.margin) }}</td>
+    </tr>
+    {% else %}<tr><td colspan="8" class="muted">No jobs yet. Try <code>python -m qbjobs demo</code> for a sample company.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Jobs{% endblock %}</title>
+<style>
+  :root { --ink:#1d2230; --muted:#667085; --line:#e4e7ec; --bg:#f7f8fa; --card:#fff; --accent:#1f6feb; --bad:#c4320a; --good:#067647; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink); background:var(--bg); }
+  header { background:var(--card); border-bottom:1px solid var(--line); padding:12px 20px; display:flex; gap:20px; align-items:center; flex-wrap:wrap; }
+  header a { color:var(--ink); text-decoration:none; font-weight:600; }
+  header .env { margin-left:auto; font-size:13px; padding:3px 10px; border-radius:99px; background:#fef0c7; }
+  header .env.production { background:#fee4e2; color:var(--bad); font-weight:700; }
+  main { max-width:1100px; margin:0 auto; padding:20px 16px 60px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin-bottom:16px; }
+  h1 { font-size:22px; margin:4px 0 14px; } h2 { font-size:16px; margin:0 0 10px; }
+  table { width:100%; border-collapse:collapse; } th,td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--line); }
+  th { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); } td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; }
+  .wrap { overflow-x:auto; } td:first-child { white-space:nowrap; }
+  form.inline { display:flex; gap:8px; flex-wrap:wrap; align-items:end; margin-top:10px; }
+  input, select { font:inherit; padding:6px 8px; border:1px solid #d0d5dd; border-radius:6px; background:#fff; }
+  button { font:inherit; padding:7px 14px; border:0; border-radius:6px; background:var(--accent); color:#fff; cursor:pointer; }
+  button.secondary { background:#eef2f6; color:var(--ink); }
+  .pill { font-size:12px; padding:2px 8px; border-radius:99px; background:#eef2f6; } .pill.done { background:#d1fadf; } .pill.invoiced { background:#d1e9ff; }
+  .bad { color:var(--bad); font-weight:600; } .good { color:var(--good); } .muted { color:var(--muted); }
+  .flash { padding:10px 14px; border-radius:8px; margin-bottom:14px; } .flash.error { background:#fee4e2; } .flash.ok { background:#d1fadf; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; } .stat b { display:block; font-size:20px; }
+  a { color:var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <a href="{{ url_for('board') }}">Jobs</a>
+  <a href="{{ url_for('report_page') }}">Job costing</a>
+  <a href="{{ url_for('settings_page') }}">Settings</a>
+  <span class="env {{ env }}">{{ 'LIVE BOOKS' if env == 'production' else 'Sandbox' }}</span>
+</header>
+<main>
+  {% for cat, msg in get_flashed_messages(with_categories=true) %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+  {% block body %}{% endblock %}
+</main>
+</body>
+</html>

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}{{ job.number }}{% endblock %}
+{% block body %}
+<h1>{{ job.number }}: {{ job.title }} <span class="pill {{ job.status }}">{{ job.status }}</span></h1>
+<p class="muted">{{ customer.name }}{% if job.address %} · {{ job.address }}{% endif %}{% if job.quoted %} · quoted {{ dollars(job.quoted) }}{% endif %}{% if job.notes %}<br>{{ job.notes }}{% endif %}</p>
+
+<div class="card grid">
+  <div class="stat">Revenue<b>{{ dollars(costing.revenue) }}</b><span class="muted">from {{ costing.revenue_from }}</span></div>
+  <div class="stat">Labor<b>{{ dollars(costing.labor) }}</b><span class="muted">{{ costing.hours }} hours</span></div>
+  <div class="stat">Materials<b>{{ dollars(costing.materials) }}</b></div>
+  <div class="stat">Profit<b class="{{ 'bad' if costing.profit < 0 }}">{{ dollars(costing.profit) }}</b><span class="muted">{{ pct(costing.margin) }} margin</span></div>
+  {% if job.qbo_invoice_id %}<div class="stat">Still owed<b>{{ dollars(job.qbo_balance) }}</b><span class="muted">invoice {{ job.qbo_invoice_id }}</span></div>{% endif %}
+</div>
+
+<div class="card wrap">
+  <h2>Hours</h2>
+  <table><tr><th>Date</th><th>Tech</th><th class="n">Hours</th><th class="n">Cost</th></tr>
+  {% for l in labor %}<tr><td>{{ l.work_date }}</td><td>{{ l.tech }}</td><td class="n">{{ l.hours }}</td><td class="n">{{ dollars((l.hours * l.cost_rate) | round | int) }}</td></tr>{% endfor %}
+  </table>
+  {% if job.status != 'invoiced' %}
+  <form class="inline" method="post" action="{{ url_for('job_action', number=job.number, what='labor') }}">
+    <input type="hidden" name="csrf" value="{{ session.csrf }}">
+    <select name="tech_id">{% for t in techs %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}</select>
+    <input name="hours" size="5" placeholder="hours" required inputmode="decimal">
+    <input name="work_date" type="date">
+    <button>Log hours</button>
+  </form>{% endif %}
+</div>
+
+<div class="card wrap">
+  <h2>Materials (what you paid)</h2>
+  <table><tr><th>Item</th><th class="n">Qty</th><th class="n">Each</th><th class="n">Total</th></tr>
+  {% for m in materials %}<tr><td>{{ m.description }}</td><td class="n">{{ m.qty }}</td><td class="n">{{ dollars(m.unit_cost) }}</td><td class="n">{{ dollars((m.qty * m.unit_cost) | round | int) }}</td></tr>{% endfor %}
+  </table>
+  {% if job.status != 'invoiced' %}
+  <form class="inline" method="post" action="{{ url_for('job_action', number=job.number, what='material') }}">
+    <input type="hidden" name="csrf" value="{{ session.csrf }}">
+    <input name="description" placeholder="what" required size="26"><input name="qty" size="4" value="1" inputmode="decimal">
+    <input name="unit_cost" size="8" placeholder="cost each" required inputmode="decimal"><button>Add</button>
+  </form>{% endif %}
+</div>
+
+<div class="card wrap">
+  <h2>What the customer is billed</h2>
+  <table><tr><th>Line</th><th>QuickBooks item</th><th class="n">Qty</th><th class="n">Price</th><th class="n">Total</th></tr>
+  {% for b in lines %}<tr><td>{{ b.description }}</td><td class="muted">{{ b.item or 'default item' }}</td><td class="n">{{ b.qty }}</td><td class="n">{{ dollars(b.unit_price) }}</td><td class="n">{{ dollars((b.qty * b.unit_price) | round | int) }}</td></tr>{% endfor %}
+  </table>
+  {% if job.status != 'invoiced' %}
+  <form class="inline" method="post" action="{{ url_for('job_action', number=job.number, what='bill') }}">
+    <input type="hidden" name="csrf" value="{{ session.csrf }}">
+    <input name="description" placeholder="line on the invoice" required size="26"><input name="qty" size="4" value="1" inputmode="decimal">
+    <input name="unit_price" size="8" placeholder="price each" required inputmode="decimal">
+    <select name="qbo_item_id"><option value="">default item</option>{% for i in items %}<option value="{{ i.qbo_id }}">{{ i.name }}</option>{% endfor %}</select>
+    <button>Add</button>
+  </form>{% endif %}
+</div>
+
+{% if job.status == 'open' %}
+<form method="post" action="{{ url_for('job_action', number=job.number, what='done') }}">
+  <input type="hidden" name="csrf" value="{{ session.csrf }}"><button>Mark job done</button>
+</form>
+{% elif job.status == 'done' and preview %}
+<div class="card">
+  <h2>Send to QuickBooks</h2>
+  {% if preview.problems %}
+    <p>Not ready yet:</p><ul>{% for p in preview.problems %}<li>{{ p }}</li>{% endfor %}</ul>
+    {% if not customer.qbo_id %}
+    <form method="post" action="{{ url_for('job_action', number=job.number, what='push-customer') }}">
+      <input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="secondary">Add {{ customer.name }} to QuickBooks</button>
+    </form>{% endif %}
+  {% else %}
+    <p>This creates invoice <b>{{ job.number }}</b> for <b>{{ customer.name }}</b>, {{ preview.invoice.Line | length }} line(s), {{ dollars(costing.revenue) }} before tax. QuickBooks adds any sales tax.</p>
+    <form method="post" action="{{ url_for('job_action', number=job.number, what='send') }}">
+      <input type="hidden" name="csrf" value="{{ session.csrf }}">
+      {% if env == 'production' %}<label><input type="checkbox" name="confirm" value="yes" required> I checked it. Create this invoice on my live books.</label><br><br>{% endif %}
+      <button>Create invoice in QuickBooks</button>
+    </form>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

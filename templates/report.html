@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Job costing{% endblock %}
+{% block body %}
+<h1>Job costing</h1>
+<form class="inline" method="get">
+  <label>Status<br><select name="status"><option value="">all</option>{% for s in ['open','done','invoiced'] %}<option {{ 'selected' if request.args.status == s }}>{{ s }}</option>{% endfor %}</select></label>
+  <label>Since<br><input type="date" name="since" value="{{ request.args.since or '' }}"></label>
+  <button class="secondary">Filter</button>
+  <a href="?status={{ request.args.status or '' }}&since={{ request.args.since or '' }}&csv=1">Download CSV</a>
+</form>
+<div class="card grid" style="margin-top:14px">
+  <div class="stat">Revenue<b>{{ dollars(rep.totals.revenue) }}</b></div>
+  <div class="stat">Labor<b>{{ dollars(rep.totals.labor) }}</b><span class="muted">{{ rep.totals.hours }} hours</span></div>
+  <div class="stat">Materials<b>{{ dollars(rep.totals.materials) }}</b></div>
+  <div class="stat">Gross profit<b>{{ dollars(rep.totals.profit) }}</b><span class="muted">{{ pct(rep.totals.margin) }}{% if rep.target_margin is not none %} · target {{ pct(rep.target_margin) }}{% endif %}</span></div>
+</div>
+<div class="card wrap">
+  <table>
+    <tr><th>Job</th><th>Title</th><th>Status</th><th class="n">Quoted</th><th class="n">Revenue</th><th class="n">Labor</th><th class="n">Materials</th><th class="n">Profit</th><th class="n">Margin</th></tr>
+    {% for r in rep.rows %}
+    <tr>
+      <td><a href="{{ url_for('job_page', number=r.job) }}">{{ r.job }}</a></td><td>{{ r.title }}</td><td><span class="pill {{ r.status }}">{{ r.status }}</span></td>
+      <td class="n">{{ dollars(r.quoted) }}</td><td class="n">{{ dollars(r.revenue) }}</td><td class="n">{{ dollars(r.labor) }}</td>
+      <td class="n">{{ dollars(r.materials) }}</td><td class="n {{ 'bad' if r.profit < 0 }}">{{ dollars(r.profit) }}</td>
+      <td class="n {{ 'bad' if r.below_target }}">{{ pct(r.margin) }}</td>
+    </tr>{% endfor %}
+  </table>
+</div>
+<p class="muted">Gross profit per job: revenue before sales tax, minus logged hours at each tech's loaded cost, minus materials at what you paid. Rent, trucks and the office aren't spread across jobs here.</p>
+{% endblock %}

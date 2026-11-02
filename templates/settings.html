@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block body %}
+<h1>Settings</h1>
+<div class="card">
+  <h2>QuickBooks</h2>
+  <p class="muted">Connect once from the terminal: <code>python -m qbjobs connect</code></p>
+  {% for what, label in [('pull-customers','Pull customers'), ('pull-items','Pull products and services'), ('refresh','Update invoice balances')] %}
+  <form method="post" action="{{ url_for('settings_action', what=what) }}" style="display:inline">
+    <input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="secondary">{{ label }}</button>
+  </form>{% endfor %}
+  <form class="inline" method="post" action="{{ url_for('settings_action', what='default-item') }}">
+    <input type="hidden" name="csrf" value="{{ session.csrf }}">
+    <label>Default QuickBooks item for invoice lines<br><select name="qbo_item_id">
+      {% for i in items %}<option value="{{ i.qbo_id }}" {{ 'selected' if i.qbo_id == default_item }}>{{ i.name }}</option>{% else %}<option value="">pull products and services first</option>{% endfor %}
+    </select></label><button>Save</button>
+  </form>
+</div>
+<div class="card wrap">
+  <h2>Techs and what an hour of theirs costs you</h2>
+  <p class="muted">Use the loaded cost: wage plus payroll taxes, workers' comp and benefits, per hour worked.</p>
+  <table><tr><th>Name</th><th class="n">Cost per hour</th></tr>
+  {% for t in techs %}<tr><td>{{ t.name }}</td><td class="n">{{ dollars(t.cost_rate) }}</td></tr>{% endfor %}</table>
+  <form class="inline" method="post" action="{{ url_for('settings_action', what='tech') }}">
+    <input type="hidden" name="csrf" value="{{ session.csrf }}">
+    <input name="name" placeholder="name" required><input name="cost_rate" placeholder="cost per hour" required size="10" inputmode="decimal"><button>Add or update</button>
+  </form>
+</div>
+<div class="card">
+  <h2>Target margin</h2>
+  <form class="inline" method="post" action="{{ url_for('settings_action', what='target') }}">
+    <input type="hidden" name="csrf" value="{{ session.csrf }}">
+    <input name="target" size="5" value="{{ ((target | float) * 100) | round | int if target else '' }}" inputmode="decimal"> %
+    <button>Save</button>
+  </form>
+  <p class="muted">Jobs under this show in red on the job costing page.</p>
+</div>
+<div class="card wrap">
+  <h2>Customers</h2>
+  <table>{% for c in customers %}<tr><td>{{ c.name }}</td><td class="muted">{{ 'in QuickBooks' if c.qbo_id else 'not in QuickBooks yet' }}</td></tr>{% endfor %}</table>
+  <form class="inline" method="post" action="{{ url_for('settings_action', what='customer') }}">
+    <input type="hidden" name="csrf" value="{{ session.csrf }}">
+    <input name="name" placeholder="name" required><input name="email" placeholder="email" type="email"><input name="phone" placeholder="phone"><button>Add</button>
+  </form>
+</div>
+{% endblock %}
