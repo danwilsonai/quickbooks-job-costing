@@ -2,10 +2,14 @@
 import argparse
 import http.server
 import json
+import os
+import shutil
+import subprocess
 import sys
 import threading
 import urllib.parse
 import webbrowser
+from pathlib import Path
 
 from . import config, db, qbo, report, sync
 
@@ -190,7 +194,7 @@ def cmd_job(a):
         db.add_material(conn, db.get_job(conn, a.job)["id"], a.description, a.qty, db.cents(a.unit_cost))
         print("Added.")
     elif a.action == "bill":
-        db.add_bill_line(conn, db.get_job(conn, a.job)["id"], a.description, a.qty, db.cents(a.unit_price), a.item)
+        db.add_bill_line(conn, db.get_job(conn, a.job)["id"], a.description, a.qty, db.cents(a.unit_price), a.item, a.taxable)
         print("Added.")
     elif a.action == "done":
         db.mark_done(conn, db.get_job(conn, a.job)["id"], a.date)
@@ -227,8 +231,60 @@ def cmd_report(a):
 
 def cmd_serve(a):
     from .web import create_app
-    print(f"Open http://localhost:{a.port}  (Ctrl+C to stop)")
+    url = f"http://localhost:{a.port}"
+    print(f"The job board is at {url}  (close this window, or press Ctrl+C, to stop it)")
+    if not a.no_open:
+        threading.Timer(1.0, webbrowser.open, (url,)).start()
     create_app().run(host="127.0.0.1", port=a.port)
+
+
+# ---- conveniences for owners who don't live in a terminal ------------------------------------------------
+
+def _open_in_editor(path):
+    if sys.platform == "darwin":
+        subprocess.run(["open", "-e", str(path)], check=False)
+    elif os.name == "nt":
+        subprocess.Popen(["notepad.exe", str(path)])
+    else:
+        subprocess.run(["xdg-open", str(path)], check=False)
+
+
+def cmd_keys(a):
+    """Open the settings file where the owner pastes their Intuit keys, so they never go into a chat."""
+    env = config.ROOT / ".env"
+    if not env.exists():
+        shutil.copy(config.ROOT / ".env.example", env)
+    _open_in_editor(env)
+    print(f"Opened {env.name} in your text editor. Paste your Client ID and Client Secret after the = signs, save, and close it.")
+
+
+def cmd_shortcut(a):
+    """Put a 'Job Board' icon on the desktop that starts the board and opens it in the browser."""
+    desktop = Path.home() / "Desktop"
+    desktop.mkdir(exist_ok=True)
+    py, root = sys.executable, config.ROOT
+    if os.name == "nt":
+        f = desktop / "Job Board.bat"
+        f.write_text(f'@echo off\r\ncd /d "{root}"\r\n"{py}" -m qbjobs serve\r\n')
+    else:
+        f = desktop / ("Job Board.command" if sys.platform == "darwin" else "job-board.sh")
+        f.write_text(f'#!/bin/bash\ncd "{root}"\n"{py}" -m qbjobs serve\n')
+        f.chmod(0o755)
+    print(f"Added {f.name} to your desktop. Double-click it to open the job board.")
+
+
+def cmd_backup(a):
+    """Copy the job database to backups/ (safe even while the job board is running)."""
+    from datetime import datetime
+    src = Path(config.DB_PATH)
+    if not src.exists():
+        sys.exit("There's no job database yet, so there's nothing to back up.")
+    dest_dir = src.parent / "backups"
+    dest_dir.mkdir(exist_ok=True)
+    dest = dest_dir / f"{src.stem}-{datetime.now():%Y-%m-%d-%H%M%S}.db"
+    with db.connect(src) as live, __import__("sqlite3").connect(dest) as copy:
+        live.backup(copy)
+    print(f"Backed up to {dest}")
 
 
 def main(argv=None):
@@ -243,7 +299,7 @@ def main(argv=None):
     s.set_defaults(fn=cmd_connect)
     sub.add_parser("disconnect", help="forget the saved QuickBooks sign-in").set_defaults(fn=cmd_disconnect)
     sub.add_parser("status", help="which company you're connected to, and job counts").set_defaults(fn=cmd_status)
-    s = sub.add_parser("set", help="change a setting (default_item, target_margin, job_prefix, job_start)")
+    s = sub.add_parser("set", help="change a setting (default_item, target_margin, job_prefix, job_start, sales_tax on|off)")
     s.add_argument("key")
     s.add_argument("value")
     s.set_defaults(fn=cmd_set)
@@ -290,6 +346,7 @@ def main(argv=None):
     j.add_argument("qty", type=float)
     j.add_argument("unit_price")
     j.add_argument("--item", help="QuickBooks item id (default: the default_item setting)")
+    j.add_argument("--taxable", action="store_true", help="charge sales tax on this line (needs: set sales_tax on)")
     j = jsub.add_parser("done")
     j.add_argument("job")
     j.add_argument("--date")
@@ -311,7 +368,11 @@ def main(argv=None):
     s.set_defaults(fn=cmd_report)
     s = sub.add_parser("serve", help="open the job board in your browser")
     s.add_argument("--port", type=int, default=5050)
+    s.add_argument("--no-open", action="store_true", help="don't open the browser")
     s.set_defaults(fn=cmd_serve)
+    sub.add_parser("keys", help="open the settings file to paste your Intuit keys into").set_defaults(fn=cmd_keys)
+    sub.add_parser("shortcut", help="put a Job Board icon on your desktop").set_defaults(fn=cmd_shortcut)
+    sub.add_parser("backup", help="copy your job database to backups/").set_defaults(fn=cmd_backup)
 
     a = p.parse_args(argv)
     try:

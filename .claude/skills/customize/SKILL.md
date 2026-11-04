@@ -6,7 +6,7 @@ description: Make a change the owner asks for - a new field (job type, crew, equ
 # Making a change safely
 
 1. **Restate the request in one sentence** and say where it will show up: the job board, the report, or the invoice. Ask only what you can't decide yourself, such as which job types they use.
-2. **Back up the data:** copy `jobs.db` to `jobs.backup-YYYY-MM-DD.db`.
+2. **Back up the data:** `python -m qbjobs backup`.
 3. **Database.** For a new field, add an `ALTER TABLE ... ADD COLUMN` in `db.connect()`. Guard it so it runs only when the column is missing (check `PRAGMA table_info`). Existing jobs keep their data.
 4. **Wire it through:**
    - the function in `db.py` that writes it

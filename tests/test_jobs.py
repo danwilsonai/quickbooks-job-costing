@@ -153,3 +153,44 @@ def test_web_pages_render_and_forms_need_the_token(conn, tmp_path):
         token = s["csrf"]
     assert web.post("/job/J-1007/done", data={"csrf": token}).status_code == 302
     assert db.get_job(conn, "J-1007")["status"] == "done"
+
+
+def test_sales_tax_marks_each_line_only_when_turned_on(conn):
+    job = db.get_job(conn, "J-1004")
+    lines = sync.invoice_payload(conn, job, strict=False)["Line"]
+    assert all("TaxCodeRef" not in l["SalesItemLineDetail"] for l in lines)  # off: QuickBooks uses each item's setting
+    db.set_setting(conn, "sales_tax", "on")
+    j7 = db.get_job(conn, "J-1007")
+    db.add_bill_line(conn, j7["id"], "Part", 1, 5000, taxable=True)
+    db.add_bill_line(conn, j7["id"], "Labor", 2, 12500)
+    codes = [l["SalesItemLineDetail"]["TaxCodeRef"]["value"] for l in sync.invoice_payload(conn, j7, strict=False)["Line"]]
+    assert codes == ["TAX", "NON"]
+
+
+def test_old_databases_get_the_taxable_column(tmp_path):
+    import sqlite3
+    p = tmp_path / "old.db"
+    old = sqlite3.connect(p)
+    old.execute("CREATE TABLE bill_lines (id INTEGER PRIMARY KEY, job_id INTEGER, description TEXT, qty REAL, unit_price INTEGER, qbo_item_id TEXT)")
+    old.execute("INSERT INTO bill_lines VALUES (1, 1, 'kept', 1, 100, NULL)")
+    old.commit(); old.close()
+    c = db.connect(p)
+    row = c.execute("SELECT description, taxable FROM bill_lines").fetchone()
+    assert (row["description"], row["taxable"]) == ("kept", 0)
+
+
+def test_backup_and_keys(tmp_path, monkeypatch):
+    from qbjobs import config
+    dbfile = tmp_path / "jobs.db"
+    monkeypatch.setattr(config, "DB_PATH", dbfile)
+    monkeypatch.setattr(cli, "_conn", lambda: db.connect(dbfile))
+    cli.main(["demo"])
+    cli.main(["backup"])
+    copies = list((tmp_path / "backups").glob("jobs-*.db"))
+    assert len(copies) == 1 and db.connect(copies[0]).execute("SELECT count(*) FROM jobs").fetchone()[0] == 7
+    root = tmp_path / "repo"; root.mkdir(); (root / ".env.example").write_text("QBO_CLIENT_ID=\n")
+    monkeypatch.setattr(config, "ROOT", root)
+    opened = []
+    monkeypatch.setattr(cli, "_open_in_editor", opened.append)
+    cli.main(["keys"])
+    assert (root / ".env").read_text() == "QBO_CLIENT_ID=\n" and opened == [root / ".env"]

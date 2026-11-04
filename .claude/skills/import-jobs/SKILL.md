@@ -9,7 +9,7 @@ description: Bring the owner's existing jobs, hours or materials into jobs.db fr
    - Read the file's header row and about 10 rows.
    - Tell the owner which columns you'll use for what: customer, job title, dates, quoted amount, hours by tech, materials and cost, billed amounts.
    - Ask about anything ambiguous, such as whether "Amount" means billed or cost.
-2. **Back up** `jobs.db` first.
+2. **Back up** first: `python -m qbjobs backup`.
 3. **Write a one-off script** in `scripts/import_<name>.py`. It uses the functions in `qbjobs/db.py` (`new_job`, `add_labor`, `add_material`, `add_bill_line`, `mark_done`), never raw inserts into money columns. Convert money with `db.cents()`.
    - **Customers:** match by name to existing customers (case-insensitive). List any new ones before creating them.
    - **Techs:** an unknown tech name stops the import. Ask for that tech's loaded cost.

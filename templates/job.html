@@ -43,7 +43,7 @@
 <div class="card wrap">
   <h2>What the customer is billed</h2>
   <table><tr><th>Line</th><th>QuickBooks item</th><th class="n">Qty</th><th class="n">Price</th><th class="n">Total</th></tr>
-  {% for b in lines %}<tr><td>{{ b.description }}</td><td class="muted">{{ b.item or 'default item' }}</td><td class="n">{{ b.qty }}</td><td class="n">{{ dollars(b.unit_price) }}</td><td class="n">{{ dollars((b.qty * b.unit_price) | round | int) }}</td></tr>{% endfor %}
+  {% for b in lines %}<tr><td>{{ b.description }}{% if b.taxable %} <span class="muted">(taxable)</span>{% endif %}</td><td class="muted">{{ b.item or 'default item' }}</td><td class="n">{{ b.qty }}</td><td class="n">{{ dollars(b.unit_price) }}</td><td class="n">{{ dollars((b.qty * b.unit_price) | round | int) }}</td></tr>{% endfor %}
   </table>
   {% if job.status != 'invoiced' %}
   <form class="inline" method="post" action="{{ url_for('job_action', number=job.number, what='bill') }}">
@@ -51,6 +51,7 @@
     <input name="description" placeholder="line on the invoice" required size="26"><input name="qty" size="4" value="1" inputmode="decimal">
     <input name="unit_price" size="8" placeholder="price each" required inputmode="decimal">
     <select name="qbo_item_id"><option value="">default item</option>{% for i in items %}<option value="{{ i.qbo_id }}">{{ i.name }}</option>{% endfor %}</select>
+    <label><input type="checkbox" name="taxable" value="1"> taxable</label>
     <button>Add</button>
   </form>{% endif %}
 </div>

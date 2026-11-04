@@ -26,15 +26,28 @@ It's a starting point, not a finished product. The idea is that you open it in C
 
 ## Start here
 
-You need Python 3.10 or newer and [Claude Code](https://claude.com/claude-code). Paste this into Claude Code:
+You need a paid Claude plan (Pro is enough) and the Claude desktop app for Mac or Windows ([claude.com/download](https://claude.com/download)). No terminal needed.
+
+1. Open the Claude app and click **Code** (not Chat or Cowork: Code is the part that can run programs on your computer).
+2. Pick a new, empty folder for it.
+3. Paste this:
 
 ```
-Clone https://github.com/danwilsonai/quickbooks-job-costing into a new folder, read its CLAUDE.md, and set it up for me.
+Clone https://github.com/danwilsonai/quickbooks-job-costing into this folder, read its CLAUDE.md, and set it up for me.
 ```
 
-Or clone it yourself, open the folder with `claude`, and say **"Set this up for me."** It follows `.claude/skills/setup/SKILL.md` and walks you through installing, loading a made-up HVAC company to play with, creating your free Intuit developer account, connecting the sandbox, and sending your first test invoice.
+Claude follows `.claude/skills/setup/SKILL.md` and walks you through it one step at a time:
+- installing what it needs
+- a made-up HVAC company to play with
+- a Job Board icon on your desktop
+- your free Intuit developer account
+- connecting the sandbox, and your first test invoice
 
-Prefer to do it yourself?
+It asks before it runs anything, so read what it's about to do and say yes if it makes sense. On Windows, the Code tab needs [Git](https://git-scm.com/download/win) installed first.
+
+**It runs on one computer.** Someone in the office enters hours from timesheets; it's not an app techs use from their phones. All your job data is one file, `jobs.db`, which setup can keep inside your Dropbox, OneDrive or Google Drive folder as a backup.
+
+Prefer the terminal?
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
@@ -43,7 +56,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python -m qbjobs serve       # the job board at http://localhost:5050
 ```
 
-To connect QuickBooks, copy `.env.example` to `.env`, add your Intuit app's keys, and run `python -m qbjobs connect`.
+To connect QuickBooks, run `python -m qbjobs keys` and paste your Intuit app's keys into the file it opens, then run `python -m qbjobs connect`.
 
 ## Tested
 
@@ -66,6 +79,8 @@ The invoice number is the job number even with QuickBooks' custom transaction nu
 - **On live books:** every invoice needs a preview (`send --dry-run`) and an explicit `--confirm`. The job board shows LIVE BOOKS in red.
 - **Your connection is a key to your books.** The sign-in file (`.qbo-tokens.json`) and your data (`jobs.db`) stay on your computer and are git-ignored. Back up `jobs.db` like any other business file.
 - **Your numbers are yours.** Job costing is only as good as the loaded labor cost you enter for each tech (wage plus payroll taxes, workers' comp and benefits). Ask your bookkeeper if you're not sure.
+- **Sales tax:** off by default, so QuickBooks uses each item's own taxable setting. Turn it on with `set sales_tax on` and mark taxable lines, then check a sandbox invoice with your bookkeeper.
+- **Going live** needs production keys from Intuit. Intuit asks for links to a license agreement and privacy policy (simple placeholder pages are fine for a private app) and a short questionnaire. The setup walks you through it.
 - **No warranty.** This is not accounting or tax advice. Have your accountant look at anything that changes how you invoice.
 
 ## How it's built

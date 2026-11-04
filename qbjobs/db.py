@@ -71,7 +71,8 @@ CREATE TABLE IF NOT EXISTS bill_lines (  -- what the customer is charged; these 
     description  TEXT NOT NULL,
     qty          REAL NOT NULL CHECK (qty > 0),
     unit_price   INTEGER NOT NULL,   -- cents
-    qbo_item_id  TEXT                -- blank = the default item in settings
+    qbo_item_id  TEXT,               -- blank = the default item in settings
+    taxable      INTEGER NOT NULL DEFAULT 0   -- 1 = charge sales tax on this line (when sales_tax is on)
 );
 """
 
@@ -81,6 +82,10 @@ def connect(path: Path | str | None = None) -> sqlite3.Connection:
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     conn.executescript(SCHEMA)
+    # columns added after the first release: add them to older databases, keeping their data
+    if "taxable" not in [r["name"] for r in conn.execute("PRAGMA table_info(bill_lines)")]:
+        conn.execute("ALTER TABLE bill_lines ADD COLUMN taxable INTEGER NOT NULL DEFAULT 0")
+        conn.commit()
     return conn
 
 
@@ -164,12 +169,12 @@ def add_material(conn, job_id: int, description: str, qty: float, unit_cost: int
 
 
 def add_bill_line(conn, job_id: int, description: str, qty: float, unit_price: int,
-                  qbo_item_id: str | None = None) -> None:
+                  qbo_item_id: str | None = None, taxable: bool = False) -> None:
     job = get_job(conn, job_id)
     if job["status"] == "invoiced":
         raise ValueError(f"{job['number']} is already invoiced; change the invoice in QuickBooks instead")
-    conn.execute("INSERT INTO bill_lines (job_id, description, qty, unit_price, qbo_item_id) VALUES (?, ?, ?, ?, ?)",
-                 (job_id, description, qty, unit_price, qbo_item_id))
+    conn.execute("INSERT INTO bill_lines (job_id, description, qty, unit_price, qbo_item_id, taxable) VALUES (?, ?, ?, ?, ?, ?)",
+                 (job_id, description, qty, unit_price, qbo_item_id, int(bool(taxable))))
     conn.commit()
 
 

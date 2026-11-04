@@ -92,16 +92,22 @@ def invoice_payload(conn, job, strict: bool = True) -> dict:
     if not lines:
         problems.append("there's nothing to bill (no bill lines)")
     default_item = db.get_setting(conn, "default_item")
+    # sales_tax on: every line says TAX or NON, and QuickBooks works out the tax from the customer's address
+    # (US companies on automated sales tax). Off: QuickBooks uses each item's own taxable setting.
+    sales_tax = (db.get_setting(conn, "sales_tax") or "off").lower() in ("on", "yes", "true", "1")
     out = []
     for ln in lines:
         item = ln["qbo_item_id"] or default_item
         if not item:
             problems.append(f"line {ln['description']!r} has no QuickBooks item and no default_item is set")
+        detail = {"ItemRef": {"value": item}, "Qty": ln["qty"], "UnitPrice": _money(ln["unit_price"])}
+        if sales_tax:
+            detail["TaxCodeRef"] = {"value": "TAX" if ln["taxable"] else "NON"}
         out.append({
             "Amount": _money(db.line_amount(ln["qty"], ln["unit_price"])),
             "Description": ln["description"],
             "DetailType": "SalesItemLineDetail",
-            "SalesItemLineDetail": {"ItemRef": {"value": item}, "Qty": ln["qty"], "UnitPrice": _money(ln["unit_price"])},
+            "SalesItemLineDetail": detail,
         })
     if problems and strict:
         raise SyncError(f"{job['number']} can't be invoiced yet: " + "; ".join(problems))

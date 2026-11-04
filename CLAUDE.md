@@ -23,7 +23,7 @@ A job record that sits next to QuickBooks Online. QuickBooks stays the books. Th
    - `.env`, `.qbo-tokens.json` and `jobs.db` never get committed, pasted into chat, or printed.
    - The token file is a key to their books.
 4. **Back up before you change the database.**
-   - Copy `jobs.db` to `jobs.backup-YYYY-MM-DD.db` before any schema change or bulk import.
+   - Run `python -m qbjobs backup` before any schema change or bulk import. It copies `jobs.db` into `backups/`.
    - Add new columns with `ALTER TABLE` in `db.py` so existing data survives. Never drop a table that has data.
 5. **Run the tests after every change:** `python -m pytest -q`. Add a test for anything that touches money or QuickBooks.
 6. **Say it, then wait.** Before installing anything, connecting to QuickBooks, changing the database or switching to live books, say what you're about to do and wait for the owner's go.
@@ -65,5 +65,9 @@ python -m qbjobs job labor|material|bill|done|show ...
 python -m qbjobs send J-1004 --dry-run   # then without --dry-run (and --confirm on live books)
 python -m qbjobs refresh                 # pull invoice balances back
 python -m qbjobs report [--csv] [--status done] [--since 2026-01-01]
-python -m qbjobs serve                   # http://localhost:5050
+python -m qbjobs serve                   # opens http://localhost:5050
+python -m qbjobs keys                    # opens .env in a text editor to paste Intuit keys
+python -m qbjobs shortcut                # a Job Board icon on the desktop
+python -m qbjobs backup                  # copy jobs.db into backups/
+python -m qbjobs set sales_tax on        # then mark lines --taxable
 ```

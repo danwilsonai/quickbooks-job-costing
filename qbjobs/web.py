@@ -79,7 +79,7 @@ def create_app(db_path=None) -> Flask:
                 db.add_material(c, job["id"], f["description"].strip(), float(f["qty"]), db.cents(f["unit_cost"]))
             elif what == "bill":
                 db.add_bill_line(c, job["id"], f["description"].strip(), float(f["qty"]), db.cents(f["unit_price"]),
-                                 f.get("qbo_item_id") or None)
+                                 f.get("qbo_item_id") or None, bool(f.get("taxable")))
             elif what == "done":
                 db.mark_done(c, job["id"])
             elif what == "send":
