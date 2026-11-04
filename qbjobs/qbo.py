@@ -23,6 +23,10 @@ API_BASE = {
 }
 SCOPE = "com.intuit.quickbooks.accounting"
 MINOR_VERSION = "75"            # Intuit's floor since 2025-08-01
+# The only QuickBooks records this tool may write, and only by creating new ones.
+# QuickBooks is the owner's books: an edit, void, delete, journal entry, bill or
+# payment written by mistake changes their real financial statements and taxes.
+# Don't widen this without the owner's bookkeeper agreeing (see CLAUDE.md rule 1).
 ALLOWED_WRITES = {"invoice", "customer"}
 
 
