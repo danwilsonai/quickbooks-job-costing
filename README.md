@@ -1,8 +1,8 @@
 # QuickBooks Job Costing
 
-A free job record that sits next to QuickBooks Online. You build and change it with Claude Code by asking in plain English.
+See what every job actually made after labor and materials, and turn finished jobs into QuickBooks Online invoices without typing them twice. It's a free tool for service companies that sits next to QuickBooks, which stays your books, and it's made to be set up and reshaped with Claude Code in plain English.
 
-It does three things QuickBooks is bad at for a service business:
+It does three things QuickBooks makes hard for a service business:
 
 1. **One record per job.** The customer, what you quoted, every tech's hours, the materials, and what you're billing, all in one place.
 2. **Job to invoice, once.** When a job is done, it becomes a QuickBooks invoice with no re-typing. If you run it twice, you still get one invoice.
@@ -24,17 +24,15 @@ It's a starting point, not a finished product. The idea is that you open it in C
 - **Claude Code:** your own Claude plan. You pay Anthropic directly; nothing goes through me.
 - **Intuit developer account:** free. It comes with a sandbox company, which is a practice QuickBooks company you can't hurt.
 
-## Start here (about 15 minutes)
+## Start here
 
-You need Python 3.10 or newer and [Claude Code](https://claude.com/claude-code).
+You need Python 3.10 or newer and [Claude Code](https://claude.com/claude-code). Paste this into Claude Code:
 
-```bash
-git clone https://github.com/danwilsonai/quickbooks-job-costing.git
-cd quickbooks-job-costing
-claude
+```
+Clone https://github.com/danwilsonai/quickbooks-job-costing into a new folder, read its CLAUDE.md, and set it up for me.
 ```
 
-Then tell Claude: **"Set this up for me."** It follows `.claude/skills/setup/SKILL.md` and walks you through installing, loading a made-up HVAC company to play with, creating your free Intuit developer account, connecting the sandbox, and sending your first test invoice.
+Or clone it yourself, open the folder with `claude`, and say **"Set this up for me."** It follows `.claude/skills/setup/SKILL.md` and walks you through installing, loading a made-up HVAC company to play with, creating your free Intuit developer account, connecting the sandbox, and sending your first test invoice.
 
 Prefer to do it yourself?
 
@@ -67,8 +65,11 @@ Plain Python, one SQLite file, and a small Flask page that only listens on your 
 | `CLAUDE.md` | the rules Claude Code works under in this repo |
 | `tests/` | tests that use a fake QuickBooks, so they run without an account |
 
-## Who made this
+## Updating and removing it
 
-I'm Dan Wilson. I build custom software and AI tools for owner-run companies at [Bedrock Process](https://bedrockprocess.com). I explain how this works, and when an ERP is and isn't worth it, on [YouTube](https://www.youtube.com/@bedrockprocess).
+- **Update:** `git pull` in the folder, then run the tests (`python -m pytest -q`). Your `jobs.db` and `.env` aren't touched, because they're never in the repo.
+- **Remove:** run `python -m qbjobs disconnect` to delete the sign-in, then delete the folder (back up `jobs.db` first if you want your job history). To cut the connection on Intuit's side as well, delete the app in your Intuit developer account.
 
-If you get stuck, open an issue. If you'd rather have it set up and shaped to your company for you, that's what [Bedrock Process](https://bedrockprocess.com) does.
+## License and help
+
+MIT, see `LICENSE`. If you get stuck, open an issue.
