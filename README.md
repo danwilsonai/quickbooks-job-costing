@@ -33,7 +33,7 @@ You need a paid Claude plan (Pro is enough) and the Claude desktop app for Mac o
 3. Paste this:
 
 ```
-Clone https://github.com/danwilsonai/quickbooks-job-costing into this folder, read its CLAUDE.md, and set it up for me.
+Set up the free QuickBooks job costing tool from https://github.com/danwilsonai/quickbooks-job-costing in this folder. Read its CLAUDE.md first, then walk me through it.
 ```
 
 Claude follows `.claude/skills/setup/SKILL.md` and walks you through it one step at a time:
