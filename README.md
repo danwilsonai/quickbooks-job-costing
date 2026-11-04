@@ -80,7 +80,7 @@ The invoice number is the job number even with QuickBooks' custom transaction nu
 - **Your connection is a key to your books.** The sign-in file (`.qbo-tokens.json`) and your data (`jobs.db`) stay on your computer and are git-ignored. Back up `jobs.db` like any other business file.
 - **Your numbers are yours.** Job costing is only as good as the loaded labor cost you enter for each tech (wage plus payroll taxes, workers' comp and benefits). Ask your bookkeeper if you're not sure.
 - **Sales tax:** off by default, so QuickBooks uses each item's own taxable setting. Turn it on with `set sales_tax on` and mark taxable lines, then check a sandbox invoice with your bookkeeper.
-- **Going live** needs production keys from Intuit. Intuit asks for links to a license agreement and privacy policy (simple placeholder pages are fine for a private app) and a short questionnaire. The setup walks you through it.
+- **Going live** needs production keys from Intuit. Intuit asks for links to a license agreement, a privacy policy and a few app pages, plus a short questionnaire. You can use the generic pages at [bedrockprocess.com/quickbooks-job-costing](https://bedrockprocess.com/quickbooks-job-costing/), and the setup walks you through it.
 - **No warranty.** This is not accounting or tax advice. Have your accountant look at anything that changes how you invoice.
 
 ## How it's built
