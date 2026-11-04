@@ -14,7 +14,7 @@ QuickBooks stays your books. This tool can create invoices and customers in Quic
 
 ## Who it's for
 
-Owners of service companies, roughly 5 to 50 people (HVAC, plumbing, electrical, and the like). You run QuickBooks Online, track jobs in spreadsheets or your head, and want to know which jobs make money before you spend $40K a year on an ERP.
+Owners of service companies, roughly 5 to 50 people (HVAC, plumbing, electrical, and the like). You run QuickBooks Online, track jobs in spreadsheets or your head, and want to know which jobs make money before you spend $40K on an ERP in its first year.
 
 It's a starting point, not a finished product. The idea is that you open it in Claude Code and have it reshaped to how your company works, for example: "add a job type and show me margin by type" or "import my jobs from this spreadsheet."
 
