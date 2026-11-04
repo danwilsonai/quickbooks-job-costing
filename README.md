@@ -73,3 +73,7 @@ Plain Python, one SQLite file, and a small Flask page that only listens on your 
 ## License and help
 
 MIT, see `LICENSE`. If you get stuck, open an issue.
+
+## Who made this
+
+[Bedrock Process](https://bedrockprocess.com) builds custom software and AI tools for owner-run companies. How this works, and when an ERP is and isn't worth it, is on [YouTube](https://www.youtube.com/@bedrockprocess). If you'd rather have it set up and shaped around your company for you, that's what we do.
