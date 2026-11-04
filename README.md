@@ -45,6 +45,21 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 To connect QuickBooks, copy `.env.example` to `.env`, add your Intuit app's keys, and run `python -m qbjobs connect`.
 
+## Tested
+
+Run end to end against an Intuit sandbox company on 2026-11-04:
+- sign-in
+- pulling items
+- adding customers
+- turning six finished jobs into invoices: one each, with the open job left alone
+- resending a job, which created no duplicate
+- losing the local link and resending, which re-linked the existing invoice
+- repeating a request with the same request id, which returned the same invoice
+- refusing a journal entry
+- reading invoice totals back into the report, with the same numbers as the demo
+
+The invoice number is the job number even with QuickBooks' custom transaction numbers setting off. Live books (production keys) were not part of this test.
+
 ## Before you point it at your real books
 
 - **Start on the sandbox.** Run your own jobs through it for a week or two before switching `QBO_ENV` to `production`.
