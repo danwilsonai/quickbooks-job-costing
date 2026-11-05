@@ -165,6 +165,20 @@ def test_sales_tax_marks_each_line_only_when_turned_on(conn):
     db.add_bill_line(conn, j7["id"], "Labor", 2, 12500)
     codes = [l["SalesItemLineDetail"]["TaxCodeRef"]["value"] for l in sync.invoice_payload(conn, j7, strict=False)["Line"]]
     assert codes == ["TAX", "NON"]
+    assert "TxnTaxDetail" not in sync.invoice_payload(conn, j7, strict=False)
+    db.set_setting(conn, "sales_tax_rate", "2")      # a company with its own rates names one, or gets $0 tax
+    assert sync.invoice_payload(conn, j7, strict=False)["TxnTaxDetail"] == {"TxnTaxCodeRef": {"value": "2"}}
+
+
+def test_warns_when_taxable_invoice_comes_back_with_no_tax(conn):
+    db.set_setting(conn, "sales_tax", "on")
+    j7 = db.get_job(conn, "J-1007")
+    db.add_bill_line(conn, j7["id"], "Part", 1, 5000, taxable=True)
+    db.mark_done(conn, j7["id"])
+    fake = FakeQBO()
+    sync.push_customer(conn, fake, j7["customer_id"])
+    res = sync.send_job(conn, fake, "J-1007")
+    assert res["action"] == "created" and "warning" in res     # the fake returns no TxnTaxDetail
 
 
 def test_old_databases_get_the_taxable_column(tmp_path):

@@ -70,4 +70,5 @@ python -m qbjobs keys                    # opens .env in a text editor to paste 
 python -m qbjobs shortcut                # a Job Board icon on the desktop
 python -m qbjobs backup                  # copy jobs.db into backups/
 python -m qbjobs set sales_tax on        # then mark lines --taxable
+python -m qbjobs taxes                   # your tax rates; companies with their own rates: set sales_tax_rate ID
 ```

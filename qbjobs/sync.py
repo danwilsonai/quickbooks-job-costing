@@ -92,9 +92,11 @@ def invoice_payload(conn, job, strict: bool = True) -> dict:
     if not lines:
         problems.append("there's nothing to bill (no bill lines)")
     default_item = db.get_setting(conn, "default_item")
-    # sales_tax on: every line says TAX or NON, and QuickBooks works out the tax from the customer's address
-    # (US companies on automated sales tax). Off: QuickBooks uses each item's own taxable setting.
+    # sales_tax on: every line says TAX or NON. On automated sales tax, QuickBooks works out the rate from the
+    # customer's address. A company that set up its own rates must also name one (sales_tax_rate, from `taxes`),
+    # or QuickBooks charges $0 (sandbox test, 2026-11-05). Off: QuickBooks uses each item's own taxable setting.
     sales_tax = (db.get_setting(conn, "sales_tax") or "off").lower() in ("on", "yes", "true", "1")
+    tax_rate = db.get_setting(conn, "sales_tax_rate")
     out = []
     for ln in lines:
         item = ln["qbo_item_id"] or default_item
@@ -117,6 +119,8 @@ def invoice_payload(conn, job, strict: bool = True) -> dict:
         "Line": out,
         "PrivateNote": f"From job {job['number']}: {job['title']}"[:4000],
     }
+    if sales_tax and tax_rate:
+        body["TxnTaxDetail"] = {"TxnTaxCodeRef": {"value": tax_rate}}
     if job["completed_at"]:
         body["TxnDate"] = job["completed_at"]
     if cust["email"]:
@@ -159,7 +163,12 @@ def send_job(conn, qbo: QBO, ref, dry_run: bool = False, confirm: bool = False) 
     request_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"qbjobs/invoice/{qbo.realm_id}/{job['number']}/{job['invoice_attempt']}"))
     inv = qbo.create("invoice", body, request_id)
     _store_invoice(conn, job["id"], inv)
-    return {"job": job["number"], "action": "created", "invoice_id": inv["Id"], "total": inv.get("TotalAmt")}
+    out = {"job": job["number"], "action": "created", "invoice_id": inv["Id"], "total": inv.get("TotalAmt")}
+    taxed = any(l["SalesItemLineDetail"].get("TaxCodeRef", {}).get("value") == "TAX" for l in body["Line"])
+    if taxed and not (inv.get("TxnTaxDetail") or {}).get("TotalTax"):
+        out["warning"] = ("This invoice has taxable lines but QuickBooks added no sales tax. If your company set up its "
+                          "own tax rates, run `taxes` and `set sales_tax_rate ID`, then check the invoice in QuickBooks.")
+    return out
 
 
 def refresh_invoices(conn, qbo: QBO) -> list[dict]:

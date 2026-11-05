@@ -156,6 +156,18 @@ def cmd_items(a):
         print(f"{r['qbo_id']:>5}  {r['name']:<35} {r['type'] or '':<12} {db.dollars(r['unit_price'])}")
 
 
+def cmd_taxes(a):
+    """The company's sales tax rates, for the sales_tax_rate setting (companies that set up their own rates)."""
+    q = _client()
+    prefs = (q.query("select * from Preferences") or [{}])[0].get("TaxPrefs", {})
+    if prefs.get("PartnerTaxEnabled"):
+        print("This company uses automated sales tax: QuickBooks picks the rate from the customer's address, "
+              "so leave sales_tax_rate unset.")
+    for t in q.query("select * from TaxCode"):
+        if t["Id"] not in ("TAX", "NON", "CustomSalesTax") and t.get("Active", True):
+            print(f"{t['Id']:>5}  {t['Name']}")
+
+
 def cmd_techs(a):
     conn = _conn()
     if a.action == "add":
@@ -299,11 +311,12 @@ def main(argv=None):
     s.set_defaults(fn=cmd_connect)
     sub.add_parser("disconnect", help="forget the saved QuickBooks sign-in").set_defaults(fn=cmd_disconnect)
     sub.add_parser("status", help="which company you're connected to, and job counts").set_defaults(fn=cmd_status)
-    s = sub.add_parser("set", help="change a setting (default_item, target_margin, job_prefix, job_start, sales_tax on|off)")
+    s = sub.add_parser("set", help="change a setting (default_item, target_margin, job_prefix, job_start, sales_tax on|off, sales_tax_rate ID)")
     s.add_argument("key")
     s.add_argument("value")
     s.set_defaults(fn=cmd_set)
 
+    sub.add_parser("taxes", help="list your QuickBooks sales tax rates (for set sales_tax_rate)").set_defaults(fn=cmd_taxes)
     s = sub.add_parser("customers", help="list | pull | push ID|all | add NAME")
     s.add_argument("action", nargs="?", default="list", choices=["list", "pull", "push", "add"])
     s.add_argument("id", nargs="?", help="customer id, or 'all' (push)")

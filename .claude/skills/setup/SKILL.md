@@ -44,6 +44,7 @@ Before the first step, tell them: "I'll ask your permission before I run anythin
    - Ask for their target margin: `set target_margin 0.40`.
    - **Sales tax.** Ask whether they charge sales tax on any of their invoices (often parts and equipment, depending on the state). If they do:
      - run `set sales_tax on`;
+     - run `taxes`. If it says the company uses automated sales tax, nothing more. If it lists rates instead, ask which one their invoices use and `set sales_tax_rate ID` (without it QuickBooks charges $0 tax);
      - mark those lines "taxable" (the checkbox on the job page, or `--taxable`);
      - send a test job to the sandbox and have them check the tax on the invoice in QuickBooks with their bookkeeper before going live.
    - **Where the data lives.** All their jobs are in one file, `jobs.db`. Offer to keep it inside their Dropbox, OneDrive or Google Drive folder, so a dead laptop doesn't take their job history: set `JOBS_DB=<that folder>/jobs.db` in `.env`. Only one computer should run the board against that file at a time.
